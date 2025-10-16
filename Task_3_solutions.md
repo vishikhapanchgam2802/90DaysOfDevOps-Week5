@@ -73,6 +73,132 @@ docker info
 * Docker’s modular structure (Engine, CLI, Daemon, Registry) allows efficient image management and deployment.
 * Containers are faster and lighter than virtual machines because they share the host OS kernel.
 * Docker volumes are essential for data persistence, and Docker networks enable scalable microservices communication.
+-------------------------------------------------------------------------------------------------
 
 
-Would you like me to now prepare the **Task 4 (Multi-stage Docker Build)** section implementation in the same well-documented format (with code, commands, and explanation ready for `solution.md`)?
+
+## 📝 **solution.md — Task 4: Multi-Stage Docker Build**
+
+### Task 4: Optimize Docker Image with Multi-Stage Builds
+
+#### Folder Structure:
+
+```
+week5/
+├── app/
+│   └── app.py
+├── Dockerfile                # Original Dockerfile from Task 2
+├── Dockerfile.multistage     # Optimized multi-stage Dockerfile
+└── solution.md
+```
+
+---
+
+### Multi-Stage Dockerfile Content
+
+```dockerfile
+# ---------- Stage 1: Builder ----------
+FROM python:3.10-slim AS builder
+WORKDIR /app
+
+# Copy app files into the container
+COPY app/ /app/
+
+# Install Flask in the builder stage
+RUN pip install --no-cache-dir flask
+
+# ---------- Stage 2: Final Image ----------
+FROM python:3.10-slim
+WORKDIR /app
+
+# Copy application code from builder stage
+COPY --from=builder /app /app
+
+# Copy installed Python libraries from builder stage
+COPY --from=builder /usr/local/lib/python3.10 /usr/local/lib/python3.10
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Expose port 80 for access
+EXPOSE 80
+
+# Command to run the Flask app
+CMD ["python", "app.py"]
+```
+
+---
+
+### Explanation of Multi-Stage Dockerfile
+
+1. **Stage 1 — Builder Stage**
+
+   * `FROM python:3.10-slim AS builder` → Use a lightweight Python image for building.
+   * `WORKDIR /app` → Set the working directory inside the container.
+   * `COPY app/ /app/` → Copy your app code into the container.
+   * `RUN pip install --no-cache-dir flask` → Install Flask **inside this stage only**.
+
+   ✅ This stage includes all tools and dependencies needed to build the app.
+
+2. **Stage 2 — Final Stage**
+
+   * `FROM python:3.10-slim` → Start a **fresh, clean image** for the final app.
+   * `COPY --from=builder /app /app` → Copy only your app code.
+   * `COPY --from=builder /usr/local/lib/python3.10 /usr/local/lib/python3.10`
+     `COPY --from=builder /usr/local/bin /usr/local/bin` → Copy installed libraries (like Flask) from the builder.
+   * `EXPOSE 80` → Make port 80 available.
+   * `CMD ["python", "app.py"]` → Run your Flask app.
+
+   ✅ This ensures the final image is **smaller**, **cleaner**, and contains only what is necessary to run your app.
+
+**Key Idea:** Multi-stage builds separate the **building environment** from the **final runtime environment**, reducing image size and vulnerabilities.
+
+---
+
+### Commands Used
+
+1. **Build the multi-stage image**
+
+```bash
+docker build -f Dockerfile.multistage -t <your-username>/sample-app:multi-stage .
+```
+
+2. **Run the container**
+
+```bash
+docker run -d -p 8080:80 <your-username>/sample-app:multi-stage
+```
+
+3. **Check running containers**
+
+```bash
+docker ps
+```
+
+4. **View logs**
+
+```bash
+docker logs <container_id>
+```
+
+---
+
+### Observations
+
+| Image Type        | Size   |
+| ----------------- | ------ |
+| Original Image    | 142 MB |
+| Multi-Stage Image | 53 MB  |
+
+* The multi-stage image is **much smaller** because it only contains the final app and necessary libraries.
+* All build tools and unnecessary files are removed.
+* The app runs successfully both **on the server** and is accessible from a browser using the server’s public IP and mapped port.
+
+---
+
+### Benefits of Multi-Stage Builds
+
+* ✅ Smaller image size → faster to download and deploy
+* ✅ Cleaner environment → fewer vulnerabilities
+* ✅ Easier to maintain → only necessary files copied
+* ✅ Faster startup and pull times
+
+
