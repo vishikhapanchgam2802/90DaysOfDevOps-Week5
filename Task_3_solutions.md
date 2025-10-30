@@ -201,4 +201,65 @@ docker logs <container_id>
 * ✅ Easier to maintain → only necessary files copied
 * ✅ Faster startup and pull times
 
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+🧩 Task 6: Persist Data with Docker Volumes
+✅ Step 1: Create a Docker Volume
+docker volume create my_volume
 
+✅ Step 2: Run a Container with the Volume
+docker run -d -v my_volume:/app/data vishikhapanchgam28/sample-app:v1.0
+
+✅ Step 3: Verify Volume Creation
+docker volume ls
+
+
+You’ll see an entry like:
+
+DRIVER    VOLUME NAME
+local     my_volume
+
+✅ Step 4: Explanation (For solution.md)
+
+Docker volumes provide data persistence by storing data outside the container’s writable layer.
+Even if a container is deleted, the data stored in the volume remains safe.
+They are useful for:
+
+Databases that store data permanently
+
+Sharing data between containers
+
+Backing up and restoring data easily
+--------------------------------------------
+----------------------------------------------
+🌐 Task 7: Configure Docker Networking
+✅ Step 1: Create a Custom Docker Network
+docker network create my_network
+
+✅ Step 2: Run Containers on the Same Network
+
+Run your sample app container:
+
+docker run -d --name sample-app --network my_network vishikhapanchgam28/sample-app:v1.0
+
+
+Run a MySQL database container on the same network:
+
+docker run -d --name my-db --network my_network -e MYSQL_ROOT_PASSWORD=root mysql:latest
+
+✅ Step 3: Verify Network
+docker network inspect my_network
+
+
+You’ll see both containers (sample-app and my-db) connected to the same network.
+
+✅ Step 4: Explanation (For solution.md)
+
+Docker networking allows containers to communicate with each other over a virtual network.
+When containers are on the same network:
+
+They can communicate using container names as hostnames
+
+No need to expose internal ports
+
+Provides isolation and flexibility for multi-container apps
